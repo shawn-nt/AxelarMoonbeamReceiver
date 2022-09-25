@@ -34,6 +34,7 @@ contract MoonbeamReceiver is AxelarExecutable {
     string public parametersSent;
     string public sourceChain;
     string public sourceAddress;
+    address sendingUser;
     IAxelarGasService public immutable gasReceiver;
     address public letterboxV3Addr;
 
@@ -53,17 +54,21 @@ contract MoonbeamReceiver is AxelarExecutable {
         string calldata sourceAddress_,
         bytes calldata payload_
     ) internal override {
-        (functionSent, parametersSent) = abi.decode(payload_, (string, string));
+        (functionSent, parametersSent, sendingUser) = abi.decode(
+            payload_,
+            (string, string, address)
+        );
         sourceChain = sourceChain_;
         sourceAddress = sourceAddress_;
+
         if (
             keccak256(bytes(functionSent)) ==
-            keccak256(bytes("stampToLetterbox(address, uint256, bool)"))
+            keccak256(bytes("stampToLetterbox(address,uint256,bool)"))
         ) {
             address(letterboxV3Addr).call(
                 abi.encodeWithSignature(
-                    "stampToLetterbox(address, uint256, bool)",
-                    sourceAddress,
+                    "stampToLetterbox(address,uint256,bool)",
+                    sendingUser,
                     parametersSent,
                     true
                 )
@@ -72,7 +77,7 @@ contract MoonbeamReceiver is AxelarExecutable {
             address(letterboxV3Addr).call(
                 abi.encodeWithSignature(
                     functionSent,
-                    sourceAddress,
+                    sendingUser,
                     parametersSent
                 )
             );
